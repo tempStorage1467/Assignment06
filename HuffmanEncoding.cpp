@@ -25,6 +25,10 @@ Map<ext_char, int> getFrequencyTable(istream& file) {
     int nextChar;
     ext_char nextExtChar;
     Map<ext_char, int> freqMap;
+    
+    // iterate over the input file character-by-character;
+    //   with each new character, set it as the proper ext_char value
+    //   and then increase the frequency map value for the character
     while (!file.eof()) {
         nextChar = file.get();
         if (nextChar == -1) continue;
@@ -36,6 +40,9 @@ Map<ext_char, int> getFrequencyTable(istream& file) {
         }
         freqMap.put(nextExtChar, freqMap.get(nextExtChar) + 1);
     }
+    
+    // add the PSEUDO_EOF character to the map, since each encoding will use
+    //   this key once
     freqMap.put(PSEUDO_EOF, 1);
 	return freqMap;
 }
@@ -56,6 +63,9 @@ Node* buildEncodingTree(Map<ext_char, int>& frequencies) {
     //   with weight equal to the character frequency
     PriorityQueue<Node*> pQueue;
     
+    // for each character in the frequency tree, create a singleton node
+    //   and set the character value equal to the character in the frequency
+    //   table; the node weight is the frequency in the table
     foreach (ext_char key in frequencies) {
         Node* cNode = new Node;
         cNode->character = key;
@@ -72,7 +82,7 @@ Node* buildEncodingTree(Map<ext_char, int>& frequencies) {
     while (pQueue.size() > 1) {
         Node* lowest = pQueue.dequeue();
         Node* secondLowest = pQueue.dequeue();
-        
+
         Node* parent = new Node;
         parent->zero = lowest;
         parent->one = secondLowest;
@@ -98,12 +108,23 @@ Node* buildEncodingTree(Map<ext_char, int>& frequencies) {
 void freeTree(Node* root) {
     if (root == NULL) return;
     
+    // traverse down the left branch
     freeTree(root->zero);
+    
+    // traverse down the right branch
     freeTree(root->one);
     
     delete root;
 }
 
+/* Function: binaryPrefixsToExtChars
+ * Usage: binaryPrefixsToExtChars(encodingTree->one, extChars, newSoFar);
+ * --------------------------------------------------------
+ * Take a binary tree, which represents the encoding prefixes used
+ *   to encode/compress a specific file with the Huffman encoding, and
+ *   create a map that maps between binary prefixes (as strings of
+ *   0s and 1s) and chars
+ */
 void binaryPrefixsToExtChars(Node* encodingTree,
                              Map<string, ext_char>& extChars,
                              string soFar) {
@@ -113,12 +134,16 @@ void binaryPrefixsToExtChars(Node* encodingTree,
     } else {
         // Recursive Case: We still have further down the node to traverse
         if (encodingTree->zero != NULL) {
+            // left branch of the encoding tree exists, so traverse
+            //   down that branch
             string newSoFar = soFar;
             newSoFar += '0';
             binaryPrefixsToExtChars(encodingTree->zero, extChars, newSoFar);
         }
         
         if (encodingTree->one != NULL) {
+            // right branch of the encoding tree exists, so traverse
+            //   down that branch
             string newSoFar = soFar;
             newSoFar += '1';
             binaryPrefixsToExtChars(encodingTree->one, extChars, newSoFar);
@@ -126,6 +151,14 @@ void binaryPrefixsToExtChars(Node* encodingTree,
     }
 }
 
+/* Function: encTreeToBinaryPrefixes
+ * Usage: encTreeToBinaryPrefixes(encodingTree->one, prefixes, soFar);
+ * --------------------------------------------------------
+ * Take a binary tree, which represents the encoding prefixes used
+ *   to encode/compress a specific file with the Huffman encoding, and
+ *   create a map that maps between chars and binary prefixes (as strings of 
+ *   0s and 1s).
+ */
 void encTreeToBinaryPrefixes(Node* encodingTree,
                       Map<ext_char, string>& prefixes,
                       string soFar) {
@@ -135,21 +168,39 @@ void encTreeToBinaryPrefixes(Node* encodingTree,
     } else {
         // Recursive Case: We still have further down the node to traverse
         if (encodingTree->zero != NULL) {
+            // left branch of the encoding tree exists, so traverse
+            //   down that branch
             string newSoFar = soFar;
+            
+            // we are walking down the left tree, so the prefix is
+            //   appended with a 0
             newSoFar += '0';
             encTreeToBinaryPrefixes(encodingTree->zero, prefixes, newSoFar);
         }
 
         if (encodingTree->one != NULL) {
+            // right branch of the encoding tree exists, so traverse
+            //   down that branch
             string newSoFar = soFar;
+            
+            // we are walking down the right tree, so the prefix is
+            //   appended with a 1
             newSoFar += '1';
             encTreeToBinaryPrefixes(encodingTree->one, prefixes, newSoFar);
         }
     }
 }
 
-
+/* Function: writeEncodingPrefix
+ * Usage: writeEncodingPrefix(prefix, outfile);
+ * --------------------------------------------------------
+ * Take an encoding prefix, which is represented as a string of 0s and 1s and
+ *   write it to the output file. This is used to write a specific character,
+ *   which has been compressed down using a binary prefix, to the output file.
+ */
 void writeEncodingPrefix(string prefix, obstream& outfile) {
+    // iterate over every index of the prefix string, which is either
+    //   a zero or one, and write that bit to the output file
     for (int i = 0; i < prefix.length(); i++) {
         if (prefix[i] == '0') {
             outfile.writeBit(0);
@@ -178,7 +229,8 @@ void writeEncodingPrefix(string prefix, obstream& outfile) {
  *     without seeking the file anywhere.
  */
 void encodeFile(istream& infile, Node* encodingTree, obstream& outfile) {
-    // generate map between ext_char and binary encoding
+    // generate map between ext_char and binary encoding of 0s and 1s,
+    //   which is represented as a string
     Map<ext_char, string> prefixes;
     encTreeToBinaryPrefixes(encodingTree, prefixes, "");
     
@@ -187,22 +239,31 @@ void encodeFile(istream& infile, Node* encodingTree, obstream& outfile) {
     
     // re-read file (you might have to push pointer back to begin of file)
     //   and for each char, look up the binary encoding and write it
-    //   out using writeBit
+    //   to the output file using writeBit
     int nextChar;
     ext_char nextExtChar;
     while (!infile.eof()) {
+        // read the next character from the file to be compressed
         nextChar = infile.get();
+        
+        // if the next char is -1, we should not write this char
         if (nextChar == -1) continue;
         
+        // determine if the next char is an ASCII character; if so, encode
+        //   it as such; otherwise, encode it as not a standard char
         if (nextChar < 256 && nextChar >= 0) {
             nextExtChar = nextChar;
         } else {
             nextExtChar = NOT_A_CHAR;
         }
+        
+        // get the encoding prefix for the next char to write compressed
         string prefix = prefixes.get(nextExtChar);
+        
+        // write the encoding prefix to the compressed output file
         writeEncodingPrefix(prefix, outfile);
     }
-    
+
     // write PSEUDO_EOF
     string prefix = prefixes.get(PSEUDO_EOF);
     writeEncodingPrefix(prefix, outfile);
@@ -221,12 +282,25 @@ void encodeFile(istream& infile, Node* encodingTree, obstream& outfile) {
  *   - The output file is open and ready for writing.
  */
 void decodeFile(ibstream& infile, Node* encodingTree, ostream& file) {
+    // compute the total number of bits so we do not overread the file
     long numBits = infile.size() * 8;
+    
+    // store the number of bits we have read
     long numBitsRead = 0;
+    
+    // build up a potential encoding prefix one bit at a time
     string nextPrefix = "";
+    
+    // create a map between the prefixes (stored as a string of 0s and 1s) and
+    //   ext_char that is encoded
     Map<string, ext_char> extChars;
     binaryPrefixsToExtChars(encodingTree, extChars, "");
+    
+    // read through the encoded file one bit at a time, building up
+    //   the next possible prefix; if a valid prefix has been built up,
+    //   then decode and write to the decoded output file
     while (numBitsRead <= numBits) {
+        // read the next bit and add it to the prefix
         if (infile.readBit() == 0) {
             nextPrefix += '0';
         } else {
@@ -234,12 +308,20 @@ void decodeFile(ibstream& infile, Node* encodingTree, ostream& file) {
         }
 
         numBitsRead++;
+        // check to see if the prefix we've built up thus far is a valid
+        //   prefix; if so, write it 
         if (extChars.containsKey(nextPrefix)) {
             ext_char nextChar = extChars.get(nextPrefix);
+            
+            // clear the next prefix
             nextPrefix = "";
             if (nextChar == PSEUDO_EOF) {
+                // we have reached the end of the section of the encoded file
+                //   that contains the encoded data; the rest is just filler
+                //   bits, so quit now
                 break;
             } else {
+                // take the decoded next character and write it to disk
                 file.put(char(nextChar));
             }
         }
@@ -353,15 +435,25 @@ Map<ext_char, int> readFileHeader(ibstream& infile) {
  * primarily be glue code.
  */
 void compress(ibstream& infile, obstream& outfile) {
+    // generate a table showing the frequency of each char
 	Map<ext_char, int> freqTable = getFrequencyTable(infile);
+    
+    // create the encoding tree based upon the character frequency table
     Node* encodingTree = buildEncodingTree(freqTable);
     
+    // write the encoding tree into the header of the output file so
+    //   other clients can decode
     writeFileHeader(outfile, freqTable);
 
+    // rewind the file pointer to the beginning of the input file as
+    //   this input file has been read through once to calculate the
+    //   frequency table
     infile.rewind();
     
+    // using the encoding tree, read through the input file and encode it
     encodeFile(infile, encodingTree, outfile);
     
+    // free the memory allocated in creating the encoding tree
     freeTree(encodingTree);
 }
 
@@ -378,12 +470,17 @@ void compress(ibstream& infile, obstream& outfile) {
  * primarily be glue code.
  */
 void decompress(ibstream& infile, ostream& outfile) {
-    Map<ext_char, int> freqTable = readFileHeader(infile);
+    // in order to decompress, we must have the encryption table;
+    //   read the encryption table in the header of the encrypted file
+    Map<ext_char, int> encodeTable = readFileHeader(infile);
     
-    Node* encodingTree = buildEncodingTree(freqTable);
+    // take the encoding table and build the encoding tree
+    Node* encodingTree = buildEncodingTree(encodeTable);
     
+    // using the encoding tree, decode the encoded file and write it
+    //   out to an output file
     decodeFile(infile, encodingTree, outfile);
     
+    // free the memory allocated in creating the encoding tree
     freeTree(encodingTree);
 }
-
