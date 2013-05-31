@@ -104,6 +104,61 @@ void freeTree(Node* root) {
     delete root;
 }
 
+void binaryPrefixsToExtChars(Node* encodingTree,
+                             Map<string, ext_char>& extChars,
+                             string soFar) {
+    if (encodingTree->one == NULL && encodingTree->zero == NULL) {
+        // Base Case: We are at the bottom of the tree in a certain branch
+        extChars.put(soFar, encodingTree->character);
+    } else {
+        // Recursive Case: We still have further down the node to traverse
+        if (encodingTree->zero != NULL) {
+            string newSoFar = soFar;
+            newSoFar += '0';
+            binaryPrefixsToExtChars(encodingTree->zero, extChars, newSoFar);
+        }
+        
+        if (encodingTree->one != NULL) {
+            string newSoFar = soFar;
+            newSoFar += '1';
+            binaryPrefixsToExtChars(encodingTree->one, extChars, newSoFar);
+        }
+    }
+}
+
+void encTreeToBinaryPrefixes(Node* encodingTree,
+                      Map<ext_char, string>& prefixes,
+                      string soFar) {
+    if (encodingTree->one == NULL && encodingTree->zero == NULL) {
+        // Base Case: We are at the bottom of the tree in a certain branch
+        prefixes.put(encodingTree->character, soFar);
+    } else {
+        // Recursive Case: We still have further down the node to traverse
+        if (encodingTree->zero != NULL) {
+            string newSoFar = soFar;
+            newSoFar += '0';
+            encTreeToBinaryPrefixes(encodingTree->zero, prefixes, newSoFar);
+        }
+
+        if (encodingTree->one != NULL) {
+            string newSoFar = soFar;
+            newSoFar += '1';
+            encTreeToBinaryPrefixes(encodingTree->one, prefixes, newSoFar);
+        }
+    }
+}
+
+
+void writeEncodingPrefix(string prefix, obstream& outfile) {
+    for (int i = 0; i < prefix.length(); i++) {
+        if (prefix[i] == '0') {
+            outfile.writeBit(0);
+        } else {
+            outfile.writeBit(1);
+        }
+    }
+}
+
 /* Function: encodeFile
  * Usage: encodeFile(source, encodingTree, output);
  * --------------------------------------------------------
@@ -121,9 +176,36 @@ void freeTree(Node* root) {
  *     to it, and the file cursor is at the end of the file.
  *     This means that you should just start writing the bits
  *     without seeking the file anywhere.
- */ 
+ */
 void encodeFile(istream& infile, Node* encodingTree, obstream& outfile) {
-	// TODO: Implement this!
+    // generate map between ext_char and binary encoding
+    Map<ext_char, string> prefixes;
+    encTreeToBinaryPrefixes(encodingTree, prefixes, "");
+    
+    // ensure that the file pointer is at the beginning
+    infile.seekg(0);
+    
+    // re-read file (you might have to push pointer back to begin of file)
+    //   and for each char, look up the binary encoding and write it
+    //   out using writeBit
+    int nextChar;
+    ext_char nextExtChar;
+    while (!infile.eof()) {
+        nextChar = infile.get();
+        if (nextChar == -1) continue;
+        
+        if (nextChar < 256 && nextChar >= 0) {
+            nextExtChar = nextChar;
+        } else {
+            nextExtChar = NOT_A_CHAR;
+        }
+        string prefix = prefixes.get(nextExtChar);
+        writeEncodingPrefix(prefix, outfile);
+    }
+    
+    // write PSEUDO_EOF
+    string prefix = prefixes.get(PSEUDO_EOF);
+    writeEncodingPrefix(prefix, outfile);
 }
 
 /* Function: decodeFile
@@ -139,7 +221,29 @@ void encodeFile(istream& infile, Node* encodingTree, obstream& outfile) {
  *   - The output file is open and ready for writing.
  */
 void decodeFile(ibstream& infile, Node* encodingTree, ostream& file) {
-	// TODO: Implement this!
+    long numBits = infile.size() * 8;
+    long numBitsRead = 0;
+    string nextPrefix = "";
+    Map<string, ext_char> extChars;
+    binaryPrefixsToExtChars(encodingTree, extChars, "");
+    while (numBitsRead <= numBits) {
+        if (infile.readBit() == 0) {
+            nextPrefix += '0';
+        } else {
+            nextPrefix += '1';
+        }
+
+        numBitsRead++;
+        if (extChars.containsKey(nextPrefix)) {
+            ext_char nextChar = extChars.get(nextPrefix);
+            nextPrefix = "";
+            if (nextChar == PSEUDO_EOF) {
+                break;
+            } else {
+                file.put(char(nextChar));
+            }
+        }
+    }
 }
 
 /* Function: writeFileHeader
@@ -249,7 +353,16 @@ Map<ext_char, int> readFileHeader(ibstream& infile) {
  * primarily be glue code.
  */
 void compress(ibstream& infile, obstream& outfile) {
-	// TODO: Implement this!
+	Map<ext_char, int> freqTable = getFrequencyTable(infile);
+    Node* encodingTree = buildEncodingTree(freqTable);
+    
+    writeFileHeader(outfile, freqTable);
+
+    infile.rewind();
+    
+    encodeFile(infile, encodingTree, outfile);
+    
+    freeTree(encodingTree);
 }
 
 /* Function: decompress
@@ -265,6 +378,12 @@ void compress(ibstream& infile, obstream& outfile) {
  * primarily be glue code.
  */
 void decompress(ibstream& infile, ostream& outfile) {
-	// TODO: Implement this!
+    Map<ext_char, int> freqTable = readFileHeader(infile);
+    
+    Node* encodingTree = buildEncodingTree(freqTable);
+    
+    decodeFile(infile, encodingTree, outfile);
+    
+    freeTree(encodingTree);
 }
 

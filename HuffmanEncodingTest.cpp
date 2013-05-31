@@ -614,7 +614,7 @@ void manualBuildEncodingTree() {
 
 /* Function: testEncoding
  * --------------------------------------------------------
- * A function to check that the encodeFile function works
+ * A function to check that the     function works
  * correctly.	 These tests look for things like the following:
  *
  *	 1. Is the length of the generated file correct?
@@ -633,6 +633,8 @@ void testEncoding() {
 	/* Construct a list of test files to run your code on. */
 	Vector<string> files;
 	files += "singleChar", "nonRepeated", "alphaOnce", "allRepeated", "fibonacci", "poem", "allCharsOnce", "tomSawyer", "dikdik.jpg", "random";
+    
+    files += "gospelOfJohn", "spl.jar";
 	
 	foreach (string file in files) {
 		logInfo("Testing encoding and decoding on file test/encodeDecode/" + file);
@@ -778,7 +780,7 @@ void manualEncodeDecode() {
 		encodeFile(source, tree, compressed);
 		
 		/* Print out the compressed representation. */
-		cout << "Compressed representation: " << endl;
+		cout << "Compressed representation from encodeFile(): " << endl;
 		printBits(compressed.str(), treeCost(tree));
 		
 		/* No need to generate new map/tree because we know we'd read same map that we wrote,
