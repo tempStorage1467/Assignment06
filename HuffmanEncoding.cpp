@@ -268,8 +268,7 @@ void encodeFile(istream& infile, Node* encodingTree, obstream& outfile) {
     Map<ext_char, string> prefixes;
     encTreeToBinaryPrefixes(encodingTree, prefixes, "");
         
-    // re-read file (you might have to push pointer back to begin of file)
-    //   and for each char, look up the binary encoding and write it
+    // for each char, look up the binary encoding and write it
     //   to the output file using writeBit
     int nextChar;
     ext_char nextExtChar;
@@ -366,8 +365,8 @@ void decodeFile(ibstream& infile, Node* encodingTree, ostream& file) {
  * An extension to provide encryption to the Huffman compression algorithm.
  * Scrambles the frequency map.
  *
- * Input Frequency Map: {10, 2; 50, 4; 265, 1}
- * Output Frequency Map: {245, 2; }
+ * Input Frequency Map: {10, 2; 50, 4; 256, 1}
+ * Output Frequency Map: {245, 2; 205, 4; 256, 1} // 256 is PSEUDO_EOF
  *
  */
 void scrambleTable(Map<ext_char, int>& frequencies) {
@@ -405,6 +404,9 @@ void scrambleTable(Map<ext_char, int>& frequencies) {
  * Extension
  * An extension to provide encryption to the Huffman compression algorithm.
  * Descrambles the frequency map.
+ *
+ * Input Frequency Map: {10, 2; 50, 4; 256, 1}
+ * Output Frequency Map: {245, 2; 205, 4; 256, 1} // 256 is PSEUDO_EOF
  */
 void descrambleTable(Map<ext_char, int>& frequencies) {
     Set<int> alreadySwapped;
