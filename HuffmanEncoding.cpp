@@ -1,9 +1,10 @@
 /**********************************************************
  * File: HuffmanEncoding.cpp
  *
+ * Eric Beach
+ * Assignment 6
+ *
  * Implementation of the functions from HuffmanEncoding.h.
- * Most (if not all) of the code that you write for this
- * assignment will go into this file.
  */
 
 #include "HuffmanEncoding.h"

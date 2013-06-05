@@ -15,6 +15,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		1A4AB9BF175956FF008BDB0D /* LZWWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LZWWrapper.h; sourceTree = "<group>"; };
+		1AD71080175F711D005363D8 /* LZWLibrary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LZWLibrary.h; sourceTree = "<group>"; };
 		2BD4CA231750243300F5255C /* bstream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = bstream.cpp; sourceTree = "<group>"; };
 		2BD4CA241750243300F5255C /* bstream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bstream.h; sourceTree = "<group>"; };
 		2BD4CA251750243300F5255C /* HuffmanEncoding.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HuffmanEncoding.cpp; sourceTree = "<group>"; };
@@ -57,6 +59,8 @@
 				2BD4CA241750243300F5255C /* bstream.h */,
 				2BD4CA251750243300F5255C /* HuffmanEncoding.cpp */,
 				2BD4CA261750243300F5255C /* HuffmanEncoding.h */,
+				1A4AB9BF175956FF008BDB0D /* LZWWrapper.h */,
+				1AD71080175F711D005363D8 /* LZWLibrary.h */,
 				2BD4CA271750243300F5255C /* HuffmanEncodingTest.cpp */,
 				2BD4CA281750243300F5255C /* HuffmanTypes.h */,
 				2BD4CA291750243300F5255C /* MemoryDiagnostics.cpp */,

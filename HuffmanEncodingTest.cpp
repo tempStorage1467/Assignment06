@@ -12,6 +12,7 @@
 #include <sstream>
 #include <iomanip>
 #include <limits>
+#include <stdio.h>
 #include "console.h"
 #include "simpio.h"
 #include "strlib.h"
@@ -19,6 +20,10 @@
 #include "HuffmanEncoding.h"
 #include "ReferenceHuffmanEncoding.h"
 #include "MemoryDiagnostics.h"
+#include "LZWWrapper.h"
+#include "LZWLibrary.h"
+#include "random.h"
+
 using namespace std;
 
 /* Type: MenuEntry
@@ -35,6 +40,9 @@ enum MenuEntry {
 	COMPRESS,
 	DECOMPRESS,
 	COMPARE,
+    MANUAL_TEST_COMPRESS_LZW,
+    MANUAL_TEST_DECOMPRESS_LZW,
+    AUTOMATIC_TEST_LZW,
 	QUIT,
 };
 
@@ -796,6 +804,167 @@ void manualEncodeDecode() {
 	}
 }
 
+/* Function: checkVectors
+ * --------------------------------------------------------
+ * Check whether two vectors are equivalent.
+ */
+void checkVectors(vector<unsigned long>& actual, vector<unsigned long>& expected,
+                  string message) {
+    for (int i = 0; i < actual.size(); i++) {
+        if (actual[i] != expected[i]) {
+            checkCondition(false, message);
+            return;
+        }
+    }
+    checkCondition(true, message);
+}
+
+/* Function: generateRandomString
+ * --------------------------------------------------------
+ * Helper function to generate a random string of a specific length, which
+ *   is used for automatic testing.
+ */
+string generateRandomString(const int length) {
+    string output = "";
+    for (int i = 0; i < length; i++) {
+        output += char(randomInteger(32, 126));
+    }
+    return output;
+}
+
+/* Function: testAutomaticLZW
+ * --------------------------------------------------------
+ * Perform automatic end-to-end tests on the LZW compression algorithm.
+ */
+void testAutomaticLZW() {
+    logInfo("Test compressing and decompressing random strings");
+    for (int i = 0; i < 20; i++) {
+        // STEP 1: Generate a lengthy random string
+        // NOTE: If I have a really large file, the dictionary
+        //   will crash and I'll get a compression error.
+        //   In looking at other code samples, there needs to be a function
+        //   that resets the dictionary. Sadly, due to work, I ran out of
+        //   time here.
+        const int randomStrLen = randomInteger(100, 300);
+
+        const string randomStr = generateRandomString(randomStrLen);
+        
+        // STEP 2: Compress that string
+        vector<unsigned long> compressed;
+        compressString(randomStr, std::back_inserter(compressed));
+        
+        // STEP 3: Write compressed string onto file
+        ofstream outFile;
+        string filename = "/Users/ebeach/test" +
+                          convertInt(randomInteger(500, 999)) +
+                          "random.txt";
+
+        outFile.open(filename.c_str());
+        if (!outFile.is_open()) {
+            checkCondition(false, "Opening file for writing compressed content");
+            outFile.clear();
+        }
+        
+        // STEP 4-A: Write a file to disk
+        writeToFile(outFile, compressed);
+        outFile.close();
+        
+        // STEP 4: Read compressed file into a vector
+        ifstream inputFile;
+        inputFile.open(filename.c_str());
+        if (!inputFile.is_open()) {
+            checkCondition(false, "Opening compressed file for reading");
+            inputFile.clear();
+        }
+
+        vector<unsigned long> compVec = readFileIntoCompressedVector(inputFile);
+        inputFile.close();
+        
+        // STEP 5: Decompress file into string
+        string deCompressed = decompress(compVec.begin(), compVec.end());
+
+        // STEP 6: Check decompressed string with original string
+        checkCondition(deCompressed == randomStr, "Check original string with decompressed string");
+
+        // STEP 7: Delete decompressed file
+        int deleteStatus = remove(filename.c_str());
+        if (deleteStatus) error("Unable to delete file used for testing");
+    }
+}
+
+/* Function: testBasicLZW
+ * --------------------------------------------------------
+ * Perform basic tests on some of the individual helper functions
+ *   used in the LZW extension.
+ */
+void testBasicLZW() {
+    // STEP 1: Test reading a file into a string
+    logInfo("Test reading a file into a string.");
+    string expected = "My hat is old, my teeth are gold.\n"
+    "I have a bird I like to hold.\n"
+    "My shoe is off, my foot is cold.\n"
+    "\n"
+    "My shoe is off, my foot is cold.\n"
+    "I have a bird I like to hold.\n"
+    "My hat is old, my teeth are gold.\n"
+    "\n"
+    "And now my story is all told.\n"
+    "\n"
+    "   -- Dr. Seuss, \"One Fish, Two Fish,\n"
+    "                  Red Fish, Blue Fish\"";
+    
+    ifstream inputFile;
+    inputFile.open("test/encodeDecode/poem");
+    string actual = readFileToString(inputFile);
+    checkCondition(actual == expected, "Reading in file to string");
+    inputFile.close();
+    
+    // STEP 2: Test the encoding of a file into a vector of ints
+    logInfo("Testing encoding of a file into a vector of ints");
+    ifstream inputFile2;
+    inputFile2.open("test/encodeDecode/simple");
+    string rawInputContents = readFileToString(inputFile2);
+
+    vector<unsigned long> actual2;
+    compressString(rawInputContents, std::back_inserter(actual2));
+    vector<unsigned long> expected2;
+    expected2.push_back(77);
+    expected2.push_back(121);
+    expected2.push_back(10);
+    expected2.push_back(67);
+    expected2.push_back(97);
+    expected2.push_back(116);
+    expected2.push_back(10);
+    expected2.push_back(105);
+    expected2.push_back(115);
+    expected2.push_back(32);
+    expected2.push_back(114);
+    expected2.push_back(101);
+    expected2.push_back(100);
+    expected2.push_back(46);
+    
+    checkVectors(actual2, expected2, "Converting string to integers");
+    
+    // STEP 3: Test writing the file to disk
+    ofstream outFile3;
+    string filename = "/Users/ebeach/testA101.txt";
+    outFile3.open(filename.c_str());
+    if (!outFile3.is_open()) {
+        checkCondition(false, "Writing file to disk");
+        outFile3.clear();
+    }
+    
+    // STEP 4-A: Write a file to disk
+    writeToFile(outFile3, actual2);
+    outFile3.close();
+    
+    // STEP 4-B: Read the file from disk
+    int statusDel = remove(filename.c_str());
+    if (statusDel != 0) {
+        checkCondition(false, "Delete the file used to temporarily store compressed data");
+    }
+}
+
 /* Function: openFile
  * --------------------------------------------------------
  * Prompts the user for the name of a file to open, opening
@@ -916,6 +1085,9 @@ void displayMenu() {
 	cout << setw(2) << COMPRESS << ": Compress a file" << endl;
 	cout << setw(2) << DECOMPRESS << ": Decompress a compressed file" << endl;
 	cout << setw(2) << COMPARE << ": Compare two files for equality" << endl;
+    cout << setw(2) << MANUAL_TEST_COMPRESS_LZW << ": Manual test compressing a file using LZW" << endl;
+    cout << setw(2) << MANUAL_TEST_DECOMPRESS_LZW << ": Manual test decompressing a file using LZW" << endl;
+    cout << setw(2) << AUTOMATIC_TEST_LZW << ": Automatic tests of functions used in LZW compression and decompression" << endl;
 	cout << setw(2) << QUIT << ": Quit" << endl;
 }
 
@@ -979,7 +1151,17 @@ int main() {
 			case COMPARE:
 				compareFiles();
 				break;
-			case QUIT:
+            case MANUAL_TEST_COMPRESS_LZW:
+                testBasicLZW();
+                compressFileLZW();
+                break;
+            case MANUAL_TEST_DECOMPRESS_LZW:
+                decompressFileLZW();
+                break;
+			case AUTOMATIC_TEST_LZW:
+                testAutomaticLZW();
+                break;
+            case QUIT:
 				return 0;
 			default:
 				cout << "Sorry, but I don't know how to do that." << endl;

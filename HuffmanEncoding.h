@@ -1,10 +1,11 @@
 /*******************************************************
  * File: HuffmanEncoding.h
  *
+ * Eric Beach
+ * Assignment 6
+ *
  * Definitions for the functions necessary to build a
- * Huffman encoding system.  Your task in this assignment
- * is to implement all of the functions defined in this
- * header file, plus any supporting helper functions.
+ * Huffman encoding system.
  */
 
 #ifndef HuffmanEncoding_Included
@@ -142,5 +143,40 @@ void compress(ibstream& infile, obstream& outfile);
  * primarily be glue code.
  */
 void decompress(ibstream& infile, ostream& outfile);
+
+////////// ADDED HELPER FUNCTIONS //////////
+
+/* Function: binaryPrefixsToExtChars
+ * Usage: binaryPrefixsToExtChars(encodingTree->one, extChars, newSoFar);
+ * --------------------------------------------------------
+ * Take a binary tree, which represents the encoding prefixes used
+ *   to encode/compress a specific file with the Huffman encoding, and
+ *   create a map that maps between binary prefixes (as strings of
+ *   0s and 1s) and chars
+ */
+void binaryPrefixsToExtChars(Node* encodingTree,
+                             Map<string, ext_char>& extChars,
+                             string soFar);
+
+/* Function: encTreeToBinaryPrefixes
+ * Usage: encTreeToBinaryPrefixes(encodingTree->one, prefixes, soFar);
+ * --------------------------------------------------------
+ * Take a binary tree, which represents the encoding prefixes used
+ *   to encode/compress a specific file with the Huffman encoding, and
+ *   create a map that maps between chars and binary prefixes (as strings of
+ *   0s and 1s).
+ */
+void encTreeToBinaryPrefixes(Node* encodingTree,
+                             Map<ext_char, string>& prefixes,
+                             string soFar);
+
+/* Function: writeEncodingPrefix
+ * Usage: writeEncodingPrefix(prefix, outfile);
+ * --------------------------------------------------------
+ * Take an encoding prefix, which is represented as a string of 0s and 1s and
+ *   write it to the output file. This is used to write a specific character,
+ *   which has been compressed down using a binary prefix, to the output file.
+ */
+void writeEncodingPrefix(string prefix, obstream& outfile);
 
 #endif
