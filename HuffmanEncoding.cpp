@@ -427,7 +427,6 @@ void performScrambleOperation(Map<ext_char, int>& frequencies, bool decode = fal
  */
 void scrambleTable(Map<ext_char, int>& frequencies) {
     performScrambleOperation(frequencies, false);
-    return;
 }
 
 /* Function: descrambleTable
@@ -442,7 +441,6 @@ void scrambleTable(Map<ext_char, int>& frequencies) {
  */
 void descrambleTable(Map<ext_char, int>& frequencies) {
     performScrambleOperation(frequencies, true);
-    return;
 }
 
 /* Function: writeFileHeader
