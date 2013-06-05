@@ -383,30 +383,30 @@ void performScrambleOperation(Map<ext_char, int>& frequencies, bool decode) {
         ext_char oldChar = ch;
         int oldFreq = frequencies[ch];
         
-        ext_char encodedCh;
+        ext_char scrambledCh;
         if (decode) {
-            encodedCh = abs(255 - ch);
+            scrambledCh = abs(255 - ch);
         } else {
-            encodedCh = abs(ch - 255);
+            scrambledCh = abs(ch - 255);
         }
         
         int oldEncodedChFreq = 0;
-        if (frequencies.containsKey(encodedCh)) {
-            oldEncodedChFreq = frequencies[encodedCh];
+        if (frequencies.containsKey(scrambledCh)) {
+            oldEncodedChFreq = frequencies[scrambledCh];
         }
         
-        if (frequencies.containsKey(encodedCh)) {
-            frequencies[encodedCh] = oldFreq;
+        if (frequencies.containsKey(scrambledCh)) {
+            frequencies[scrambledCh] = oldFreq;
             frequencies[oldChar] = oldEncodedChFreq;
         } else {
-            frequencies[encodedCh] = oldFreq;
+            frequencies[scrambledCh] = oldFreq;
             
             // since there is no value stored at the key encodedCh,
             //   we need to remove the key oldChar so our Map does not
             //   expand in size
             frequencies.remove(oldChar);
         }
-        alreadySwapped.add(encodedCh);
+        alreadySwapped.add(scrambledCh);
     }
 }
 
