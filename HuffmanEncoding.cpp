@@ -146,7 +146,7 @@ void freeTree(Node* root) {
  *   create a map that maps between binary prefixes (as strings of
  *   0s and 1s) and chars
  *
- * Note: It seems rather non-elegant to use a string to represent bits
+ * Note: It seems rather inelegant to use a string to represent bits
  *   but I do not recall our class covering a better way to store bits and
  *   manipulate them.
  */
@@ -189,7 +189,7 @@ void binaryPrefixsToExtChars(Node* encodingTree,
  *   create a map that maps between chars and binary prefixes (as strings of 
  *   0s and 1s).
  *
- * Note: It seems rather non-elegant to use a string to represent bits
+ * Note: It seems rather inelegant to use a string to represent bits
  *   but I do not recall our class covering a better way to store bits and
  *   manipulate them.
  */
@@ -267,10 +267,7 @@ void encodeFile(istream& infile, Node* encodingTree, obstream& outfile) {
     //   which is represented as a string
     Map<ext_char, string> prefixes;
     encTreeToBinaryPrefixes(encodingTree, prefixes, "");
-    
-    // ensure that the file pointer is at the beginning
-    infile.seekg(0);
-    
+        
     // re-read file (you might have to push pointer back to begin of file)
     //   and for each char, look up the binary encoding and write it
     //   to the output file using writeBit
