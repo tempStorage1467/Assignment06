@@ -136,7 +136,7 @@ void freeTree(Node* root) {
  * Usage: binaryPrefixsToExtChars(encodingTree->one, extChars, newSoFar);
  * --------------------------------------------------------
  * Takes a populated binary tree (Node* encodingTree) and builds up
- *   a map between the binary represetnation of a character and that
+ *   a map from the binary represetnation to the character and that
  *   specific character.
  *
  * Major output is: Map<string, ext_char>& extChars
@@ -175,6 +175,8 @@ void binaryPrefixsToExtChars(Node* encodingTree,
 /* Function: encTreeToBinaryPrefixes
  * Usage: encTreeToBinaryPrefixes(encodingTree->one, prefixes, soFar);
  * --------------------------------------------------------
+ * Takes a populated binary tree (Node* encodingTree) and builds up
+ *   a map from a character to its binary representation.
  *
  * Major output is: Map<ext_char, string>& prefixes
  *
