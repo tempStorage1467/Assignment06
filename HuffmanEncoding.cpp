@@ -5,6 +5,10 @@
  * Assignment 6
  *
  * Implementation of the functions from HuffmanEncoding.h.
+ *
+ * This assignment contains two significant extensions:
+ *   (1) Encryption - Encryption is provided by scrambling the frequency table.
+ *   (2) LZW Compression - LZW compression is provided.
  */
 
 #include "HuffmanEncoding.h"
