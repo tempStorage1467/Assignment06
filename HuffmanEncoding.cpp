@@ -370,6 +370,10 @@ void decodeFile(ibstream& infile, Node* encodingTree, ostream& file) {
  *
  */
 void scrambleTable(Map<ext_char, int>& frequencies) {
+    // store the indicies that we've already swapped; otherwise, we will
+    //   swap the indices back when we iterate over them the second time;
+    //   i.e., we will swap 0 and 255 and then when we reach 255, we will
+    //   wrongly swap it back with 0
     Set<int> alreadySwapped;
     foreach (ext_char ch in frequencies) {
         // do not encrypt EOF or non characters
@@ -378,6 +382,7 @@ void scrambleTable(Map<ext_char, int>& frequencies) {
         // don't swap back an already swapped element
         if (alreadySwapped.contains(ch)) continue;
         
+        // store the values we are going to swap
         ext_char oldChar = ch;
         int oldFreq = frequencies[ch];
 
@@ -392,6 +397,10 @@ void scrambleTable(Map<ext_char, int>& frequencies) {
             frequencies[oldChar] = oldEncodedChFreq;
         } else {
             frequencies[encodedCh] = oldFreq;
+            
+            // since there is no value stored at the key encodedCh,
+            //   we need to remove the key oldChar so our Map does not
+            //   expand in size
             frequencies.remove(oldChar);
         }
         alreadySwapped.add(encodedCh);
@@ -409,6 +418,10 @@ void scrambleTable(Map<ext_char, int>& frequencies) {
  * Output Frequency Map: {245, 2; 205, 4; 256, 1} // 256 is PSEUDO_EOF
  */
 void descrambleTable(Map<ext_char, int>& frequencies) {
+    // store the indicies that we've already swapped; otherwise, we will
+    //   swap the indices back when we iterate over them the second time;
+    //   i.e., we will swap 0 and 255 and then when we reach 255, we will
+    //   wrongly swap it back with 0
     Set<int> alreadySwapped;
     foreach (ext_char ch in frequencies) {
         // do not encrypt EOF or non characters
@@ -431,6 +444,10 @@ void descrambleTable(Map<ext_char, int>& frequencies) {
             frequencies[oldChar] = oldEncodedChFreq;
         } else {
             frequencies[encodedCh] = oldFreq;
+            
+            // since there is no value stored at the key encodedCh,
+            //   we need to remove the key oldChar so our Map does not
+            //   expand in size
             frequencies.remove(oldChar);
         }
         alreadySwapped.add(encodedCh);
