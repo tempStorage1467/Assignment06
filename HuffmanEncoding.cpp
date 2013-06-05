@@ -9,6 +9,7 @@
  * This assignment contains two significant extensions:
  *   (1) Encryption - Encryption is provided by scrambling the frequency table.
  *   (2) LZW Compression - LZW compression is provided.
+ *   (3) Additional Unit Tests - Many additional unit tests for these extensions.
  */
 
 #include "HuffmanEncoding.h"
