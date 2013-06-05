@@ -1,5 +1,5 @@
 /**********************************************************
- * File: LZWWrapper.h
+ * File: LZWWLibrary.h
  *
  * Eric Beach
  * Assignment 6 (Extension)

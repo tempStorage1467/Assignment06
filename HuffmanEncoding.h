@@ -15,6 +15,8 @@
 #include "map.h"
 #include "bstream.h"
 #include "pqueue.h"
+#include <cmath>
+#include "set.h"
 
 /* Function: getFrequencyTable
  * Usage: Map<ext_char, int> freq = getFrequencyTable(file);

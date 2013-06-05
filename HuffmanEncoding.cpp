@@ -329,6 +329,76 @@ void decodeFile(ibstream& infile, Node* encodingTree, ostream& file) {
     }
 }
 
+/* Function: scrambleTable
+ * Usage: scrambleTable(frequencies);
+ * --------------------------------------------------------
+ * Extension
+ * An extension to provide encryption to the Huffman compression algorithm.
+ */
+void scrambleTable(Map<ext_char, int>& frequencies) {
+    Set<int> alreadySwapped;
+    foreach (ext_char ch in frequencies) {
+        // do not encrypt EOF or non characters
+        if (ch == PSEUDO_EOF || ch == NOT_A_CHAR) continue;
+        
+        // don't swap back an already swapped element
+        if (alreadySwapped.contains(ch)) continue;
+        
+        ext_char oldChar = ch;
+        int oldFreq = frequencies[ch];
+
+        ext_char encodedCh = abs(ch - 255);
+        int oldEncodedChFreq = 0;
+        if (frequencies.containsKey(encodedCh)) {
+            oldEncodedChFreq = frequencies[encodedCh];
+        }
+        
+        if (frequencies.containsKey(encodedCh)) {
+            frequencies[encodedCh] = oldFreq;
+            frequencies[oldChar] = oldEncodedChFreq;
+        } else {
+            frequencies[encodedCh] = oldFreq;
+            frequencies.remove(oldChar);
+        }
+        alreadySwapped.add(encodedCh);
+    }
+}
+
+/* Function: descrambleTable
+ * Usage: descrambleTable(result);
+ * --------------------------------------------------------
+ * Extension
+ * An extension to provide encryption to the Huffman compression algorithm.
+ */
+void descrambleTable(Map<ext_char, int>& frequencies) {
+    Set<int> alreadySwapped;
+    foreach (ext_char ch in frequencies) {
+        // do not encrypt EOF or non characters
+        if (ch == PSEUDO_EOF || ch == NOT_A_CHAR) continue;
+        
+        // don't swap back an already swapped element or it will undue
+        if (alreadySwapped.contains(ch)) continue;
+        
+        ext_char oldChar = ch;
+        int oldFreq = frequencies[ch];
+        
+        ext_char encodedCh = abs(255 - ch);
+        int oldEncodedChFreq = 0;
+        if (frequencies.containsKey(encodedCh)) {
+            oldEncodedChFreq = frequencies[encodedCh];
+        }
+        
+        if (frequencies.containsKey(encodedCh)) {
+            frequencies[encodedCh] = oldFreq;
+            frequencies[oldChar] = oldEncodedChFreq;
+        } else {
+            frequencies[encodedCh] = oldFreq;
+            frequencies.remove(oldChar);
+        }
+        alreadySwapped.add(encodedCh);
+    }
+}
+
 /* Function: writeFileHeader
  * Usage: writeFileHeader(output, frequencies);
  * --------------------------------------------------------
@@ -354,7 +424,9 @@ void writeFileHeader(obstream& outfile, Map<ext_char, int>& frequencies) {
 	 * No information about PSEUDO_EOF is written, since the frequency is
 	 * always 1.
 	 */
-	 
+
+    scrambleTable(frequencies);
+    
 	/* Verify that we have PSEUDO_EOF somewhere in this mapping. */
 	if (!frequencies.containsKey(PSEUDO_EOF)) {
 		error("No PSEUDO_EOF defined.");
@@ -421,6 +493,9 @@ Map<ext_char, int> readFileHeader(ibstream& infile) {
 	
 	/* Add in 1 for PSEUDO_EOF. */
 	result[PSEUDO_EOF] = 1;
+    
+    descrambleTable(result);
+    
 	return result;
 }
 
