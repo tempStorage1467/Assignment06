@@ -365,12 +365,8 @@ void decodeFile(ibstream& infile, Node* encodingTree, ostream& file) {
  * An extension to provide encryption to the Huffman compression algorithm.
  * Scrambles or descrambles the frequency map, depending upon the value
  *   passed in to the decode parameter.
- *
- * Input Frequency Map: {10, 2; 50, 4; 256, 1}
- * Output Frequency Map: {245, 2; 205, 4; 256, 1} // 256 is PSEUDO_EOF
- *
  */
-void performScrambleOperation(Map<ext_char, int>& frequencies, bool decode = false) {
+void performScrambleOperation(Map<ext_char, int>& frequencies, bool decode) {
     // store the indicies that we've already swapped; otherwise, we will
     //   swap the indices back when we iterate over them the second time;
     //   i.e., we will swap 0 and 255 and then when we reach 255, we will
