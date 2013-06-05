@@ -6,7 +6,7 @@
  *
  * Implementation of the functions from HuffmanEncoding.h.
  *
- * This assignment contains two significant extensions:
+ * This assignment contains three significant extensions:
  *   (1) Encryption - Encryption is provided by scrambling the frequency table.
  *   (2) LZW Compression - LZW compression is provided.
  *   (3) Additional Unit Tests - Many additional unit tests for these extensions.
@@ -30,6 +30,8 @@
 Map<ext_char, int> getFrequencyTable(istream& file) {
     int nextChar;
     ext_char nextExtChar;
+    
+    // create a frequency map to build and store the computed result
     Map<ext_char, int> freqMap;
     
     // iterate over the input file character-by-character;
@@ -44,9 +46,12 @@ Map<ext_char, int> getFrequencyTable(istream& file) {
         } else {
             nextExtChar = NOT_A_CHAR;
         }
+        
+        // update the frequency map with the next character, which now
+        //   should have one more instance than it previously did
         freqMap.put(nextExtChar, freqMap.get(nextExtChar) + 1);
     }
-    
+
     // add the PSEUDO_EOF character to the map, since each encoding will use
     //   this key once
     freqMap.put(PSEUDO_EOF, 1);
@@ -75,6 +80,9 @@ Node* buildEncodingTree(Map<ext_char, int>& frequencies) {
     foreach (ext_char key in frequencies) {
         Node* cNode = new Node;
         cNode->character = key;
+        
+        // need to explicitly initialize zero and one nodes as null
+        //   or serious errors will happen later
         cNode->zero = NULL;
         cNode->one = NULL;
         cNode->weight = frequencies.get(key);
@@ -92,6 +100,8 @@ Node* buildEncodingTree(Map<ext_char, int>& frequencies) {
         Node* parent = new Node;
         parent->zero = lowest;
         parent->one = secondLowest;
+        
+        // new weight is sum of other cells' weight
         parent->weight = (lowest->weight) + (secondLowest->weight);
         parent->character = NOT_A_CHAR;
         
@@ -108,8 +118,7 @@ Node* buildEncodingTree(Map<ext_char, int>& frequencies) {
 /* Function: freeTree
  * Usage: freeTree(encodingTree);
  * --------------------------------------------------------
- * Deallocates all memory allocated for a given encoding
- * tree.
+ * Deallocates all memory allocated for a given encoding tree.
  */
 void freeTree(Node* root) {
     if (root == NULL) return;
@@ -126,6 +135,12 @@ void freeTree(Node* root) {
 /* Function: binaryPrefixsToExtChars
  * Usage: binaryPrefixsToExtChars(encodingTree->one, extChars, newSoFar);
  * --------------------------------------------------------
+ * Takes a populated binary tree (Node* encodingTree) and builds up
+ *   a map between the binary represetnation of a character and that
+ *   specific character.
+ *
+ * Major output is: Map<string, ext_char>& extChars
+ *
  * Take a binary tree, which represents the encoding prefixes used
  *   to encode/compress a specific file with the Huffman encoding, and
  *   create a map that maps between binary prefixes (as strings of
@@ -160,6 +175,9 @@ void binaryPrefixsToExtChars(Node* encodingTree,
 /* Function: encTreeToBinaryPrefixes
  * Usage: encTreeToBinaryPrefixes(encodingTree->one, prefixes, soFar);
  * --------------------------------------------------------
+ *
+ * Major output is: Map<ext_char, string>& prefixes
+ *
  * Take a binary tree, which represents the encoding prefixes used
  *   to encode/compress a specific file with the Huffman encoding, and
  *   create a map that maps between chars and binary prefixes (as strings of 
@@ -340,6 +358,10 @@ void decodeFile(ibstream& infile, Node* encodingTree, ostream& file) {
  * Extension
  * An extension to provide encryption to the Huffman compression algorithm.
  * Scrambles the frequency map.
+ *
+ * Input Frequency Map: {10, 2; 50, 4; 265, 1}
+ * Output Frequency Map: {245, 2; }
+ *
  */
 void scrambleTable(Map<ext_char, int>& frequencies) {
     Set<int> alreadySwapped;
