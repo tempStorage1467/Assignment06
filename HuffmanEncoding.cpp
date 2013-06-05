@@ -334,6 +334,7 @@ void decodeFile(ibstream& infile, Node* encodingTree, ostream& file) {
  * --------------------------------------------------------
  * Extension
  * An extension to provide encryption to the Huffman compression algorithm.
+ * Scrambles the frequency map.
  */
 void scrambleTable(Map<ext_char, int>& frequencies) {
     Set<int> alreadySwapped;
@@ -369,6 +370,7 @@ void scrambleTable(Map<ext_char, int>& frequencies) {
  * --------------------------------------------------------
  * Extension
  * An extension to provide encryption to the Huffman compression algorithm.
+ * Descrambles the frequency map.
  */
 void descrambleTable(Map<ext_char, int>& frequencies) {
     Set<int> alreadySwapped;
