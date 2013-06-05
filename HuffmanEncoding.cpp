@@ -358,18 +358,19 @@ void decodeFile(ibstream& infile, Node* encodingTree, ostream& file) {
     }
 }
 
-/* Function: scrambleTable
- * Usage: scrambleTable(frequencies);
+/* Function: performScrambleOperation
+ * Usage: performScrambleOperation(frequencies, false);
  * --------------------------------------------------------
  * Extension
  * An extension to provide encryption to the Huffman compression algorithm.
- * Scrambles the frequency map.
+ * Scrambles or descrambles the frequency map, depending upon the value
+ *   passed in to the decode parameter.
  *
  * Input Frequency Map: {10, 2; 50, 4; 256, 1}
  * Output Frequency Map: {245, 2; 205, 4; 256, 1} // 256 is PSEUDO_EOF
  *
  */
-void scrambleTable(Map<ext_char, int>& frequencies) {
+void performScrambleOperation(Map<ext_char, int>& frequencies, bool decode = false) {
     // store the indicies that we've already swapped; otherwise, we will
     //   swap the indices back when we iterate over them the second time;
     //   i.e., we will swap 0 and 255 and then when we reach 255, we will
@@ -385,8 +386,14 @@ void scrambleTable(Map<ext_char, int>& frequencies) {
         // store the values we are going to swap
         ext_char oldChar = ch;
         int oldFreq = frequencies[ch];
-
-        ext_char encodedCh = abs(ch - 255);
+        
+        ext_char encodedCh;
+        if (decode) {
+            encodedCh = abs(255 - ch);
+        } else {
+            encodedCh = abs(ch - 255);
+        }
+        
         int oldEncodedChFreq = 0;
         if (frequencies.containsKey(encodedCh)) {
             oldEncodedChFreq = frequencies[encodedCh];
@@ -407,6 +414,22 @@ void scrambleTable(Map<ext_char, int>& frequencies) {
     }
 }
 
+/* Function: scrambleTable
+ * Usage: scrambleTable(frequencies);
+ * --------------------------------------------------------
+ * Extension
+ * An extension to provide encryption to the Huffman compression algorithm.
+ * Scrambles the frequency map.
+ *
+ * Input Frequency Map: {10, 2; 50, 4; 256, 1}
+ * Output Frequency Map: {245, 2; 205, 4; 256, 1} // 256 is PSEUDO_EOF
+ *
+ */
+void scrambleTable(Map<ext_char, int>& frequencies) {
+    performScrambleOperation(frequencies, false);
+    return;
+}
+
 /* Function: descrambleTable
  * Usage: descrambleTable(result);
  * --------------------------------------------------------
@@ -418,40 +441,8 @@ void scrambleTable(Map<ext_char, int>& frequencies) {
  * Output Frequency Map: {245, 2; 205, 4; 256, 1} // 256 is PSEUDO_EOF
  */
 void descrambleTable(Map<ext_char, int>& frequencies) {
-    // store the indicies that we've already swapped; otherwise, we will
-    //   swap the indices back when we iterate over them the second time;
-    //   i.e., we will swap 0 and 255 and then when we reach 255, we will
-    //   wrongly swap it back with 0
-    Set<int> alreadySwapped;
-    foreach (ext_char ch in frequencies) {
-        // do not encrypt EOF or non characters
-        if (ch == PSEUDO_EOF || ch == NOT_A_CHAR) continue;
-        
-        // don't swap back an already swapped element or it will undue
-        if (alreadySwapped.contains(ch)) continue;
-        
-        ext_char oldChar = ch;
-        int oldFreq = frequencies[ch];
-        
-        ext_char encodedCh = abs(255 - ch);
-        int oldEncodedChFreq = 0;
-        if (frequencies.containsKey(encodedCh)) {
-            oldEncodedChFreq = frequencies[encodedCh];
-        }
-        
-        if (frequencies.containsKey(encodedCh)) {
-            frequencies[encodedCh] = oldFreq;
-            frequencies[oldChar] = oldEncodedChFreq;
-        } else {
-            frequencies[encodedCh] = oldFreq;
-            
-            // since there is no value stored at the key encodedCh,
-            //   we need to remove the key oldChar so our Map does not
-            //   expand in size
-            frequencies.remove(oldChar);
-        }
-        alreadySwapped.add(encodedCh);
-    }
+    performScrambleOperation(frequencies, true);
+    return;
 }
 
 /* Function: writeFileHeader
@@ -480,6 +471,7 @@ void writeFileHeader(obstream& outfile, Map<ext_char, int>& frequencies) {
 	 * always 1.
 	 */
 
+    /* Extension to encrypt the frequency table */
     scrambleTable(frequencies);
     
 	/* Verify that we have PSEUDO_EOF somewhere in this mapping. */
@@ -549,6 +541,7 @@ Map<ext_char, int> readFileHeader(ibstream& infile) {
 	/* Add in 1 for PSEUDO_EOF. */
 	result[PSEUDO_EOF] = 1;
     
+    /* Extension to decrypt the frequency table */
     descrambleTable(result);
     
 	return result;
