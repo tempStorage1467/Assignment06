@@ -145,6 +145,10 @@ void freeTree(Node* root) {
  *   to encode/compress a specific file with the Huffman encoding, and
  *   create a map that maps between binary prefixes (as strings of
  *   0s and 1s) and chars
+ *
+ * Note: It seems rather non-elegant to use a string to represent bits
+ *   but I do not recall our class covering a better way to store bits and
+ *   manipulate them.
  */
 void binaryPrefixsToExtChars(Node* encodingTree,
                              Map<string, ext_char>& extChars,
@@ -184,6 +188,10 @@ void binaryPrefixsToExtChars(Node* encodingTree,
  *   to encode/compress a specific file with the Huffman encoding, and
  *   create a map that maps between chars and binary prefixes (as strings of 
  *   0s and 1s).
+ *
+ * Note: It seems rather non-elegant to use a string to represent bits
+ *   but I do not recall our class covering a better way to store bits and
+ *   manipulate them.
  */
 void encTreeToBinaryPrefixes(Node* encodingTree,
                       Map<ext_char, string>& prefixes,
